@@ -153,7 +153,9 @@ export const timeline = {
     { year: 2025, what: 'Curso de segurança de redes da Cisco' },
     { year: 2025, what: 'Agosto de 2025 a julho de 2026: serviço militar no 5º Batalhão de Suprimento, no controle de materiais do quartel' },
     { year: 2026, what: 'SmartScale e MilScale, escalas de serviço geradas automaticamente' },
+    { year: 2026, what: 'AutoSpaceShooterCore, núcleo reutilizável para bots de jogos de nave, em Python com visão computacional' },
     { year: 2026, what: 'Katábasis, RPG em Godot com C#, projeto pessoal em desenvolvimento' },
+    { year: 2026, what: 'Damnatio, jogo narrativo de escolhas para navegador, em TypeScript, projeto pessoal em desenvolvimento' },
   ],
   en: [
     { year: 2024, what: 'Courses in Python with Pygame, C# and programming logic; Alura’s Imersão Dev; PoliWeek' },
@@ -161,7 +163,9 @@ export const timeline = {
     { year: 2025, what: 'Cisco network security course' },
     { year: 2025, what: 'August 2025 to July 2026: military service at the 5th Supply Battalion, handling the base’s material control' },
     { year: 2026, what: 'SmartScale and MilScale, automatically generated duty rosters' },
+    { year: 2026, what: 'AutoSpaceShooterCore, a reusable core for space shooter bots, in Python with computer vision' },
     { year: 2026, what: 'Katábasis, an RPG in Godot with C#, personal project in development' },
+    { year: 2026, what: 'Damnatio, a narrative choice game for the browser, in TypeScript, personal project in development' },
   ],
 };
 
@@ -193,8 +197,10 @@ export const courses = {
   ],
 };
 
+export type ProjectKey = 'smartscale' | 'core' | 'katabasis' | 'damnatio' | 'tijucas';
+
 type Project = {
-  key: 'smartscale' | 'katabasis' | 'tijucas';
+  key: ProjectKey;
   year: number;
   repo: string;
   tech: string[];
@@ -211,7 +217,7 @@ type Project = {
 export const projects: Record<Lang, Project[]> = {
   pt: [
     {
-      key: 'smartscale', year: 2026, repo: 'https://github.com/Jgbr11/Sistema-SmartScale',
+      key: 'smartscale', year: 2026, repo: 'https://github.com/jgmtz/SmartScale',
       tech: ['Java 21', 'Spring Boot', 'React', 'TypeScript', 'MySQL', 'Flyway', 'Docker'],
       title: 'SmartScale, com o produto MilScale',
       summary: 'Um núcleo reutilizável que monta escalas de serviço sozinho, respeitando folgas mínimas, afastamentos e pedidos de troca. O MilScale aplica esse núcleo à rotina de um batalhão.',
@@ -232,6 +238,31 @@ export const projects: Record<Lang, Project[]> = {
         'O módulo smartscale-core não depende de Spring nem de JPA: guarda as interfaces genéricas e o motor de rodízio, e pode ser reaproveitado por outro produto.',
         'O produto MilScale consome o núcleo, com back-end em Spring Boot e front-end em React com TypeScript.',
         'Banco versionado com Flyway, testes com JUnit e Vitest, ambiente completo com Docker Compose.',
+      ],
+    },
+    {
+      key: 'core', year: 2026, repo: 'https://github.com/jgmtz/AutoSpaceShooterCore',
+      tech: ['Python', 'NumPy', 'OpenCV', 'scrcpy', 'adb', 'unittest'],
+      title: 'AutoSpaceShooterCore',
+      summary: 'Núcleo reutilizável para bots de jogos de nave com chuva de projéteis: prevê a trajetória de cada tiro, planeja um caminho seguro e mantém a nave na linha de tiro dos inimigos. Cada jogo vira um produto que só ensina o núcleo a enxergar a tela e a mover a nave.',
+      mechanicsShort: 'Planejamento no espaço-tempo, ofensiva com limite de risco, compensação de atraso, arena sintética',
+      steps: ['Quadro da tela', 'Nave, tiros e inimigos', 'Trajetórias previstas', 'Caminho mais seguro', 'Toque na tela'],
+      context: 'Projeto pessoal, com linha de produto de software da disciplina de reuso',
+      problem: 'Comecei com um bot para um único jogo de celular, controlado pelo PC. Ao estudar linha de produto de software na PUCPR, percebi que quase tudo o que ele fazia (rastrear os tiros, decidir para onde ir e mover a nave sem atraso) vale para qualquer jogo do gênero. Separei essa parte num núcleo genérico e deixei no produto só o que é do jogo: a visão da tela, os menus e os números medidos no aparelho.',
+      mechanics: [
+        { title: 'Esquiva planejada', text: 'Em vez de só reagir ao tiro mais próximo, o planejador monta uma grade de posições ao longo de 1,2 s e escolhe o caminho que mantém a maior distância dos projéteis previstos. Assim ele acha vãos em zigue-zague no meio de muros de tiros.' },
+        { title: 'Ofensiva com segurança', text: 'Quando já está segura, a nave prefere a coluna de tiro dos inimigos. Ela só sai dessa coluna quando o risco passa de um limite configurável.' },
+        { title: 'Rastreio', text: 'Calcula a velocidade de cada projétil entre um quadro e outro, lembra dos que somem por instantes e trata os inimigos que descem como obstáculos móveis.' },
+        { title: 'Controle com atraso', text: 'O piloto transforma "quero a nave aqui" em arrastos curtos, compensando o atraso entre o comando e o vídeo. Se a nave some num efeito de dano, a posição é estimada pelo movimento já enviado.' },
+        { title: 'Arena sintética', text: 'Um jogo de nave mínimo, feito para testar o núcleo sem depender de jogo de terceiros. Em 30 s de jogo, a nave parada leva de 44 a 51 tiros; com o núcleo, de 4 a 11, e abate mais que o dobro de inimigos.' },
+        { title: 'Produto de exemplo', text: 'O SpaceShooterGWZ joga um shooter de Android pelo PC, via scrcpy e adb, com visão por templates. Testes de regressão provam que, montado sobre o núcleo, ele toma exatamente as mesmas decisões da versão original, conferidas em 2.400 quadros reais.' },
+      ],
+      architecture: [
+        'Pontos de variação explícitos: o adaptador do jogo (como enxergar a tela), o controle e a fonte de quadros. O resto é comum a todos os produtos.',
+        'Loop genérico quadro → visão → rastreio → plano → piloto, com o planejador numa thread separada.',
+        'Planejamento vetorizado com NumPy e parâmetros que se ajustam a qualquer resolução de tela.',
+        'Testes com unittest no núcleo e testes de regressão no produto, comparando com as saídas gravadas antes da extração.',
+        'Projeto de estudo de automação e visão computacional, para jogos próprios, simuladores ou uso offline.',
       ],
     },
     {
@@ -260,6 +291,31 @@ export const projects: Record<Lang, Project[]> = {
       ],
     },
     {
+      key: 'damnatio', year: 2026, repo: 'https://github.com/jgmtz/damnatio',
+      tech: ['TypeScript', 'Vite', 'Vitest', 'HTML e CSS', 'JSON'],
+      title: 'Damnatio: Todo Fio Tem um Preço',
+      summary: 'Jogo narrativo de escolhas para navegador, pintado como um vaso grego. Numa Roma imaginada que engoliu a Grécia, o jogador alterna entre três protagonistas presos aos Fios do Destino, e cada dom cobra um preço.',
+      mechanicsShort: 'Três protagonistas, escolhas que atam, cortam ou embaraçam fios, mapa dos fios, mini-jogos que nunca travam',
+      steps: ['Fragmento jogável', 'Escolha marcada', 'Fio atado ou cortado', 'Eco em outro protagonista', 'Mapa dos fios'],
+      context: 'Projeto pessoal, individual, em desenvolvimento',
+      problem: 'Jogos de escolhas costumam cair em dois extremos: texto demais para ler ou consequências que parecem aleatórias. Aqui cada consequência grave segue três passos (semente, aviso com chance de agir e consequência), não existe medidor de bom ou mau, e nenhum trecho passa de dois minutos sem o jogador agir. Toda a história fica em dados, nos dois idiomas, e os testes percorrem o capítulo para garantir que nenhum caminho quebre.',
+      mechanics: [
+        { title: 'Três vidas, um destino', text: 'Lívia, uma Vestal perdendo a fé; Asterion, o "monstro" do labirinto; e Théron, um herói que o mundo esqueceu. O capítulo intercala fragmentos curtos dos três, e as ações de um mudam as cenas dos outros.' },
+        { title: 'Fios do Destino', text: 'As escolhas importantes aparecem como fios de tinta que se atam, se cortam ou se embaraçam na tela. A morte de um personagem é o corte do seu fio.' },
+        { title: 'Mapa dos fios', text: 'Ao fim de cada fragmento, um fluxograma desenhado com o próprio fio mostra o caminho seguido, os de outras partidas e os nunca percorridos, sem rótulo de certo ou errado.' },
+        { title: 'Mãos no controle', text: 'Onze mini-jogos curtos, como verter o óleo, cantar no ritmo da chama e descer no escuro, além de exploração em friso e furtividade leve. Eles nunca travam o jogo: o desempenho só muda as consequências.' },
+        { title: 'Consequências com aviso', text: 'Nenhuma consequência grave nasce de uma fala só. Cada protagonista tem um contador que aparece só por sinais, e a morte é o último degrau de desfechos graduais.' },
+        { title: 'Dois idiomas', text: 'Inglês e português do Brasil, com todas as falas traduzidas. Os testes acusam qualquer tradução faltando.' },
+      ],
+      architecture: [
+        'TypeScript sem engine de jogo: um motor de cenas próprio lê os capítulos em JSON e aplica as consequências num estado único, que é o que o save grava.',
+        'Conteúdo como dados: capítulos, personagens, cenários, textos e áudio ficam em content/, separados do código.',
+        'Testes com Vitest: lógica, saves, mini-jogos, validação de todo o conteúdo e partidas simuladas do começo ao fim do capítulo.',
+        'Build com Vite, pronto para publicar no itch.io, e um depurador embutido (F2) para pular para qualquer cena.',
+        'A arte foi criada com ferramentas de IA e tratada pelos scripts do projeto; texto, narrativa, design e código são meus.',
+      ],
+    },
+    {
       key: 'tijucas', year: 2025, repo: 'https://github.com/RafaelZeni/Tijucas-Open',
       tech: ['PHP', 'MySQL', 'Bootstrap', 'Leaflet', 'FPDF/FPDI', 'OpenBoleto'],
       title: 'Tijucas Open',
@@ -285,7 +341,7 @@ export const projects: Record<Lang, Project[]> = {
   ],
   en: [
     {
-      key: 'smartscale', year: 2026, repo: 'https://github.com/Jgbr11/Sistema-SmartScale',
+      key: 'smartscale', year: 2026, repo: 'https://github.com/jgmtz/SmartScale',
       tech: ['Java 21', 'Spring Boot', 'React', 'TypeScript', 'MySQL', 'Flyway', 'Docker'],
       title: 'SmartScale, with the MilScale product',
       summary: 'A reusable core that builds duty rosters on its own, respecting minimum rest, leave and swap requests. MilScale applies that core to the routine of an army battalion.',
@@ -306,6 +362,31 @@ export const projects: Record<Lang, Project[]> = {
         'The smartscale-core module has no Spring or JPA dependency: it holds the generic interfaces and the rotation engine, ready to be reused by another product.',
         'The MilScale product consumes the core, with a Spring Boot back end and a React and TypeScript front end.',
         'Database versioned with Flyway, tests with JUnit and Vitest, full environment with Docker Compose.',
+      ],
+    },
+    {
+      key: 'core', year: 2026, repo: 'https://github.com/jgmtz/AutoSpaceShooterCore',
+      tech: ['Python', 'NumPy', 'OpenCV', 'scrcpy', 'adb', 'unittest'],
+      title: 'AutoSpaceShooterCore',
+      summary: 'A reusable core for bots that play bullet-hell space shooters: it predicts the path of every shot, plans a safe route and keeps the ship in the enemies’ line of fire. Each game becomes a product that only teaches the core how to read the screen and move the ship.',
+      mechanicsShort: 'Space-time planning, offense with a risk limit, latency compensation, synthetic arena',
+      steps: ['Screen frame', 'Ship, shots and enemies', 'Predicted paths', 'Safest route', 'Touch input'],
+      context: 'Personal project, applying software product lines from the reuse course',
+      problem: 'It started as a bot for a single mobile game, controlled from the PC. While studying software product lines at PUCPR, I noticed that almost everything it did (tracking shots, deciding where to go and moving the ship without lag) applies to any game in the genre. I moved that part into a generic core and left in the product only what belongs to the game: reading the screen, the menus and the numbers measured on the device.',
+      mechanics: [
+        { title: 'Planned dodging', text: 'Instead of just reacting to the nearest shot, the planner builds a grid of positions over 1.2 s and picks the route that keeps the largest distance from the predicted projectiles. That is how it finds zigzag gaps through walls of bullets.' },
+        { title: 'Safe offense', text: 'Once it is safe, the ship prefers the enemies’ firing column. It only leaves that column when the risk goes past a configurable limit.' },
+        { title: 'Tracking', text: 'It measures each projectile’s velocity between frames, remembers shots that disappear for a moment and treats descending enemies as moving obstacles.' },
+        { title: 'Control with lag', text: 'The pilot turns "I want the ship here" into short drags, compensating for the delay between the command and the video. If the ship vanishes in a damage effect, its position is estimated from the movement already sent.' },
+        { title: 'Synthetic arena', text: 'A minimal space shooter built to test the core without any third-party game. In 30 s of play, a still ship takes 44 to 51 hits; with the core, 4 to 11, and it destroys more than twice as many enemies.' },
+        { title: 'Example product', text: 'SpaceShooterGWZ plays an Android shooter from the PC, through scrcpy and adb, with template-based vision. Regression tests prove that, built on the core, it makes exactly the same decisions as the original version, checked on 2,400 real frames.' },
+      ],
+      architecture: [
+        'Explicit variation points: the game adapter (how to read the screen), the controls and the frame source. Everything else is shared by every product.',
+        'Generic loop frame → vision → tracking → plan → pilot, with the planner on a separate thread.',
+        'Vectorized planning with NumPy and parameters that scale to any screen resolution.',
+        'unittest tests on the core and regression tests on the product, compared against outputs recorded before the extraction.',
+        'A study project in automation and computer vision, meant for your own games, simulators or offline use.',
       ],
     },
     {
@@ -331,6 +412,31 @@ export const projects: Record<Lang, Project[]> = {
         'Content in 173 JSON files with a small condition language, validated by tests; no hard-coded text, everything goes through localization keys.',
         'About 300 xUnit unit tests on the core, development in milestones (M0 to M5) and Python scripts to pixelate sprites and block out regions.',
         'The art was made with AI tools and pixelated by the project scripts; the writing, narrative, design and code are mine.',
+      ],
+    },
+    {
+      key: 'damnatio', year: 2026, repo: 'https://github.com/jgmtz/damnatio',
+      tech: ['TypeScript', 'Vite', 'Vitest', 'HTML and CSS', 'JSON'],
+      title: 'Damnatio: Every Thread Has a Price',
+      summary: 'A narrative choice game for the browser, painted like a Greek vase. In an imagined Rome that swallowed Greece, the player switches between three protagonists caught in the Threads of Fate, and every gift has a price.',
+      mechanicsShort: 'Three protagonists, choices that tie, cut or tangle threads, a thread map, minigames that never block',
+      steps: ['Playable fragment', 'Marked choice', 'Thread tied or cut', 'Echo in another life', 'Thread map'],
+      context: 'Personal solo project, in development',
+      problem: 'Choice games often fall into two extremes: too much text to read, or consequences that feel random. Here every serious consequence follows three steps (a seed, a warning with a chance to act, and the outcome), there is no good-or-evil meter, and no stretch goes over two minutes without the player acting. The whole story lives in data, in both languages, and the tests play through the chapter to make sure no path breaks.',
+      mechanics: [
+        { title: 'Three lives, one fate', text: 'Lívia, a Vestal losing her faith; Asterion, the "monster" of the labyrinth; and Théron, a hero the world has forgotten. The chapter interleaves short fragments of all three, and what one does changes the others’ scenes.' },
+        { title: 'Threads of Fate', text: 'Important choices appear as ink threads that tie, cut or tangle on screen. A character’s death is the cutting of their thread.' },
+        { title: 'Thread map', text: 'At the end of each fragment, a flowchart drawn with the thread itself shows the path taken, paths from other playthroughs and paths never walked, with no right or wrong labels.' },
+        { title: 'Hands on the controls', text: 'Eleven short minigames, such as pouring the oil, singing to the rhythm of the flame and descending in the dark, plus side-scrolling exploration and light stealth. They never block progress: performance only changes the consequences.' },
+        { title: 'Consequences with warning', text: 'No serious consequence comes from a single line. Each protagonist has a counter shown only through signs, and death is the last step of gradual outcomes.' },
+        { title: 'Two languages', text: 'English and Brazilian Portuguese, with every line translated. The tests flag any missing translation.' },
+      ],
+      architecture: [
+        'TypeScript with no game engine: a custom scene runner reads the chapters from JSON and applies consequences to a single state, which is what the save stores.',
+        'Content as data: chapters, characters, backgrounds, text and audio live in content/, apart from the code.',
+        'Tests with Vitest: logic, saves, minigames, validation of all content and simulated playthroughs from the start to the end of the chapter.',
+        'Built with Vite, ready to publish on itch.io, with a built-in debugger (F2) to jump to any scene.',
+        'The art was made with AI tools and cleaned up by the project scripts; the writing, narrative, design and code are mine.',
       ],
     },
     {

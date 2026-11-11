@@ -1,7 +1,7 @@
 ---
-import { ui, projects, type Lang } from '../content';
+import { ui, projects, type Lang, type ProjectKey } from '../content';
 
-interface Props { lang: Lang; project: 'smartscale' | 'katabasis' | 'tijucas'; index: number }
+interface Props { lang: Lang; project: ProjectKey; index: number }
 const { lang, project, index } = Astro.props;
 const t = ui[lang];
 const p = projects[lang].find(x => x.key === project)!;
