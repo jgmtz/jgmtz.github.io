@@ -1,0 +1,91 @@
+---
+import { ui, projects, type Lang } from '../content';
+
+interface Props { lang: Lang; project: 'smartscale' | 'katabasis' | 'tijucas'; index: number }
+const { lang, project, index } = Astro.props;
+const t = ui[lang];
+const p = projects[lang].find(x => x.key === project)!;
+const h = lang === 'pt'
+  ? { problem: 'O problema', flow: 'Fluxo do sistema', how: 'Como funciona', arch: 'Arquitetura' }
+  : { problem: 'The problem', flow: 'System flow', how: 'How it works', arch: 'Architecture' };
+---
+<dialog class="pm" id={project} aria-labelledby={`pm-${project}`}>
+  <div class="pm-band" aria-hidden="true"></div>
+  <div class="pm-in">
+    <header class="pm-head">
+      <div>
+        <p class="pm-meta sans">{t.entry} {String(index + 1).padStart(2, '0')}, {p.year}, {p.context}</p>
+        <h2 id={`pm-${project}`}>{p.title}</h2>
+      </div>
+      <form method="dialog"><button class="pm-close sans" aria-label={t.close}>✕</button></form>
+    </header>
+
+    <p class="pm-lead">{p.summary}</p>
+    <p class="pm-tags">{p.tech.map(x => <span class="tag">{x}</span>)}</p>
+    <a class="btn" href={p.repo}>{t.repo}</a>
+
+    <section>
+      <h3><span class="n" aria-hidden="true">I</span>{h.problem}</h3>
+      <p>{p.problem}</p>
+    </section>
+
+    <section>
+      <h3><span class="n" aria-hidden="true">II</span>{h.flow}</h3>
+      <ol class="pm-flow sans">
+        {p.steps.map((s, k) => <li><span class="dot" aria-hidden="true">{k + 1}</span>{s}</li>)}
+      </ol>
+    </section>
+
+    <section>
+      <h3><span class="n" aria-hidden="true">III</span>{h.how}</h3>
+      <dl class="pm-mech">
+        {p.mechanics.map(m => (<div><dt>{m.title}</dt><dd>{m.text}</dd></div>))}
+      </dl>
+    </section>
+
+    <section>
+      <h3><span class="n" aria-hidden="true">IV</span>{h.arch}</h3>
+      <ul class="pm-arch">{p.architecture.map(a => <li>{a}</li>)}</ul>
+    </section>
+  </div>
+  <div class="pm-band" aria-hidden="true"></div>
+</dialog>
+
+<style>
+  .pm { margin: auto; border: 1px solid var(--copper); background: var(--paper); color: var(--text); padding: 0; width: min(920px, 94vw); max-height: 90vh; }
+  .pm::backdrop { background: rgb(8 14 26 / .78); backdrop-filter: blur(4px); }
+  .pm[open] { animation: pm-in .45s cubic-bezier(.2, .7, .2, 1); }
+  .pm[open]::backdrop { animation: pm-fade .45s ease; }
+  @keyframes pm-in { from { opacity: 0; transform: translateY(18px) scale(.985); } }
+  @keyframes pm-fade { from { opacity: 0; } }
+  .pm-band { height: 16px; margin: 10px 14px; }
+  .pm-band { background: var(--gold); opacity: .55; -webkit-mask: var(--meander) repeat-x 0 0 / 16px 16px; mask: var(--meander) repeat-x 0 0 / 16px 16px; }
+  .pm-in { padding: 18px 44px 28px; }
+  .pm-head { display: flex; justify-content: space-between; gap: 20px; align-items: start; }
+  .pm-meta { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .pm h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 500; line-height: 1.08; margin-top: 6px; }
+  .pm-close { width: 38px; height: 38px; border: 1px solid var(--rule); background: none; cursor: pointer; font-size: 15px; }
+  .pm-close:hover { border-color: var(--copper); color: var(--copper); }
+  .pm-lead { font-size: 19px; margin: 16px 0 14px; max-width: 62ch; }
+  .pm-tags { margin-bottom: 14px; }
+  .pm section { margin-top: 36px; padding-top: 22px; border-top: 1px solid var(--rule); }
+  .pm h3 { font-size: 22px; font-weight: 500; margin-bottom: 12px; display: flex; gap: 14px; align-items: baseline; }
+  .pm h3 .n { color: var(--copper); font-size: 16px; min-width: 26px; }
+  .pm section > p { max-width: 66ch; }
+  .pm-flow { list-style: none; padding: 0; display: grid; gap: 10px; font-size: 15px; }
+  .pm-flow li { display: flex; align-items: center; gap: 14px; }
+  .pm-flow li { isolation: isolate; }
+  .pm-flow .dot { position: relative; width: 26px; height: 26px; flex: none; display: grid; place-items: center; color: var(--gold); font-size: 12px; }
+  .pm-flow .dot::before { content: ""; position: absolute; inset: 4px; border: 1px solid var(--gold); transform: rotate(45deg); z-index: -1; }
+  .pm-mech { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 32px; }
+  .pm-mech dt { font-weight: 600; font-size: 18px; margin-bottom: 4px; }
+  .pm-mech dd { font-size: 16px; }
+  .pm-arch { padding-left: 20px; max-width: 66ch; }
+  .pm-arch li { margin-bottom: 8px; }
+  @media (max-width: 700px) {
+    .pm { width: 100vw; max-width: 100vw; max-height: 100dvh; height: 100dvh; margin: 0; }
+    .pm-in { padding: 14px 20px 24px; }
+    .pm-mech { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { .pm[open], .pm[open]::backdrop { animation: none; } }
+</style>

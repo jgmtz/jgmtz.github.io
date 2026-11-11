@@ -1,0 +1,361 @@
+---
+import Base from '../layouts/Base.astro';
+import Contact from './Contact.astro';
+import ProjectModal from './ProjectModal.astro';
+import QuickSheet from './QuickSheet.astro';
+import { ui, projects, timeline, skills, courses, HAS_CV, CV_FILE, HAS_PHOTO, type Lang } from '../content';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+const pages = [
+  ['inicio', '', t.nav.home], ['projetos', 'I', t.nav.projects], ['servico', 'II', t.nav.service],
+  ['trajetoria', 'III', t.nav.path], ['competencias', 'IV', t.nav.skills], ['contato', 'V', t.nav.contact],
+];
+const title = lang === 'pt'
+  ? 'João Guilherme Matzenbacher, Engenharia de Software'
+  : 'João Guilherme Matzenbacher, Software Engineering';
+---
+<Base lang={lang} route="home" title={title} description={t.lead} showModes>
+  <!-- Explorar: índice lateral em numerais romanos, acompanha a seção atual -->
+  <nav class="pager explore-only" aria-label={t.pagerLabel}>
+    <ol>
+      {pages.map(([id, n, label]) => (
+        <li><a href={'#' + id} data-pg={id} aria-label={label} title={label}>{n || <i class="pg-home" aria-hidden="true" />}</a></li>
+      ))}
+    </ol>
+    <p class="pg-count sans" aria-hidden="true"><span>—</span> / V</p>
+  </nav>
+
+  <QuickSheet lang={lang} />
+
+  <section class="intro explore-only" id="inicio">
+    <div class="stage">
+      <article class="card" aria-labelledby="nome">
+        <svg class="frame" aria-hidden="true">
+          <rect class="draw" pathLength="100" />
+          <rect class="inner" />
+        </svg>
+        <svg class="volute tl" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 14m-2 0a2 2 0 1 0 4 0a4 4 0 1 0-8 0a6 6 0 1 0 12 0a8 8 0 1 0-16 0" /></svg>
+        <svg class="volute br" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 14m-2 0a2 2 0 1 0 4 0a4 4 0 1 0-8 0a6 6 0 1 0 12 0a8 8 0 1 0-16 0" /></svg>
+
+        <div class="card-main">
+          <p class="inv sans row" style="--s: .30">{t.cardUpdated}</p>
+          <h1 id="nome" class="row" style="--s: .34">João Guilherme Matzenbacher</h1>
+          <p class="lead row" style="--s: .42">{t.lead}</p>
+          <dl class="fields">
+            <div class="row" style="--s: .52"><dt>{t.fields.education}</dt><dd>{t.fields.educationV}</dd></div>
+            <div class="row" style="--s: .58"><dt>{t.fields.location}</dt><dd>{t.fields.locationV}</dd></div>
+            <div class="row" style="--s: .64"><dt>{t.fields.languages}</dt><dd>{t.fields.languagesV}</dd></div>
+            <div class="row" style="--s: .70"><dt>{t.fields.cv}</dt>
+              <dd>{HAS_CV ? <a href={CV_FILE[lang]} target="_blank" rel="noopener">{t.fields.cvLink}</a> : <span class="muted">{t.fields.cvSoon}</span>}</dd></div>
+          </dl>
+        </div>
+        <div class="photo row" style="--s: .46">
+          {HAS_PHOTO
+            ? <img src="/foto.jpg" alt={t.photoAlt} width="400" height="400" />
+            : <span class="sans">{t.photoSoon}</span>}
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section explore-only" id="projetos" aria-labelledby="h-proj">
+    <div class="sec-head"><span class="n" aria-hidden="true">I</span><h2 id="h-proj" data-letters>{t.sections.projects}</h2></div>
+    <div class="projects">
+      {projects[lang].map((p, i) => (
+        <article class="project" data-reveal>
+          <div class="p-meta sans">
+            <span class="p-num">{t.entry} {String(i + 1).padStart(2, '0')}</span>
+            <span>{p.year}</span>
+            <span class="muted">{p.context}</span>
+          </div>
+          <div class="p-body">
+            <h3><button type="button" class="p-title" data-open={p.key}>{p.title}</button></h3>
+            <p class="p-sum">{p.summary}</p>
+            <ol class="flow sans" aria-label={t.flow}>
+              {p.steps.map((s, k) => (
+                <li style={`--k:${k}`}><span class="dot" aria-hidden="true">{k + 1}</span><span>{s}</span></li>
+              ))}
+            </ol>
+            <p class="p-tech sans">{p.tech.map(x => <span class="tag">{x}</span>)}</p>
+            <button type="button" class="more sans" data-open={p.key} aria-haspopup="dialog">{t.openProject}</button>
+          </div>
+        </article>
+      ))}
+    </div>
+    {projects[lang].map((p, i) => <ProjectModal lang={lang} project={p.key} index={i} />)}
+  </section>
+
+  <section class="section explore-only" id="servico" aria-labelledby="h-serv">
+    <div class="sec-head"><span class="n" aria-hidden="true">II</span><h2 id="h-serv" data-letters>{t.sections.service}</h2></div>
+    <div class="sec-body service">
+      <dl class="s-fields" data-reveal>
+        {t.service.fields.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
+      </dl>
+      <div class="s-text" data-reveal style="--d: 2">
+        <ul class="s-duties">{t.service.duties.map(d => <li>{d}</li>)}</ul>
+        <div class="s-bridge">
+          <h3>{t.service.bridgeTitle}</h3>
+          <p>{t.service.bridge}</p>
+          <button type="button" class="more sans" data-open="smartscale" aria-haspopup="dialog">{t.service.bridgeLink}</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section explore-only" id="trajetoria" aria-labelledby="h-traj">
+    <div class="sec-head"><span class="n" aria-hidden="true">III</span><h2 id="h-traj" data-letters>{t.sections.path}</h2></div>
+    <ol class="timeline" style="--tp: 0">
+      {timeline[lang].map((e, i, all) => (
+        <li data-at={(i / all.length).toFixed(2)}>
+          <span class="when sans">{e.year}</span>
+          <span class="what">{e.what}</span>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="section explore-only" id="competencias" aria-labelledby="h-comp">
+    <div class="sec-head"><span class="n" aria-hidden="true">IV</span><h2 id="h-comp" data-letters>{t.sections.skills}</h2></div>
+    <div class="sec-body">
+      <ul class="skills sans">
+        {skills[lang].map(([name, level, n], k) => (
+          <li data-reveal style={`--d:${k}`}>
+            <span class="s-name">{name}</span>
+            <span class="s-level"><span class="pips" aria-hidden="true">{[1, 2, 3].map(j => <i class={j <= n ? 'on' : ''} />)}</span>{level}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="note sans muted">{t.skillsNote}</p>
+
+      <h3 class="sub">{t.sections.courses}</h3>
+      <table class="courses sans" data-reveal>
+        <tbody>
+          {courses[lang].map(([c, where, hours, year]) => (
+            <tr><td>{c}</td><td>{where}</td><td>{hours}</td><td>{year}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section explore-only" id="contato" aria-labelledby="h-cont">
+    <div class="sec-head"><span class="n" aria-hidden="true">V</span><h2 id="h-cont" data-letters>{t.sections.contact}</h2></div>
+    <div class="sec-body" data-reveal><Contact lang={lang} /></div>
+  </section>
+</Base>
+
+<script>
+  const root = document.documentElement;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const tl = document.querySelector<HTMLElement>('.timeline');
+  const items = tl ? [...tl.querySelectorAll<HTMLElement>('li')] : [];
+  const clamp = (v: number) => Math.min(1, Math.max(0, v));
+
+  let ticking = false;
+  function update() {
+    ticking = false;
+    const animated = root.dataset.mode !== 'quick' && !reduce.matches;
+
+    // linha da trajetória desenhada conforme a rolagem
+    if (tl) {
+      let tp = 1;
+      if (animated) {
+        const r = tl.getBoundingClientRect();
+        tp = clamp((innerHeight * 0.75 - r.top) / r.height);
+      }
+      tl.style.setProperty('--tp', tp.toFixed(3));
+      items.forEach(li => li.classList.toggle('on', tp >= Number(li.dataset.at) + 0.04 || tp === 1));
+    }
+  }
+  const request = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+  addEventListener('scroll', request, { passive: true });
+  addEventListener('resize', request);
+  update();
+
+  // Explorar: seção atual (índice lateral, contador e meandro que se desenha na chegada)
+  const secs = [...document.querySelectorAll<HTMLElement>('main > section')];
+  const pgLinks = [...document.querySelectorAll<HTMLAnchorElement>('[data-pg]')];
+  const pgCount = document.querySelector<HTMLElement>('.pg-count span');
+  let cur = 0;
+  const mark = (i: number) => {
+    cur = i;
+    pgLinks.forEach((a, k) => a.toggleAttribute('aria-current', k === i));
+    if (pgCount) pgCount.textContent = pgLinks[i]?.textContent?.trim() || '—';
+  };
+  const here = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add('seen');
+    mark(secs.indexOf(e.target as HTMLElement));
+  }), { rootMargin: '-45% 0px -50% 0px' });
+  secs.forEach(s => here.observe(s));
+  mark(0);
+
+  // Explorar: setas, Page Up/Down e espaço passam de seção em seção
+  const slides = () => root.dataset.mode !== 'quick' && innerWidth > 760 && !reduce.matches;
+  addEventListener('keydown', e => {
+    if (!slides() || e.altKey || e.ctrlKey || e.metaKey || document.querySelector('dialog[open]')) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('input, textarea, select, [contenteditable]')) return;
+    const down = e.key === 'ArrowDown' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey);
+    const up = e.key === 'ArrowUp' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey);
+    if (!down && !up) return;
+    if (e.key === ' ' && target.closest('button, a')) return;
+    // seção mais alta que a tela: deixa rolar por dentro até a borda
+    const r = secs[cur].getBoundingClientRect();
+    if (down && r.bottom > innerHeight + 4) return;
+    if (up && r.top < 76) return;
+    const next = secs[cur + (down ? 1 : -1)];
+    if (!next) return;
+    e.preventDefault();
+    next.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // popups dos projetos (também abrem por #smartscale ou #tijucas na URL)
+  const openModal = (id: string) => {
+    const d = document.getElementById(id);
+    if (d instanceof HTMLDialogElement && !d.open) { d.showModal(); d.scrollTop = 0; }
+  };
+  document.querySelectorAll<HTMLButtonElement>('[data-open]').forEach(b =>
+    b.addEventListener('click', () => { openModal(b.dataset.open!); history.replaceState(null, '', '#' + b.dataset.open); }));
+  document.querySelectorAll<HTMLDialogElement>('dialog.pm').forEach(d => {
+    d.addEventListener('click', e => { if (e.target === d) d.close(); });
+    d.addEventListener('close', () => history.replaceState(null, '', location.pathname + location.search));
+  });
+  if (location.hash) openModal(location.hash.slice(1));
+</script>
+
+<style>
+  /* ---------- índice lateral (só Explorar, telas largas) ---------- */
+  .pager { position: fixed; right: 28px; top: 50%; transform: translateY(-50%); z-index: 15; display: none; font: 15px var(--serif); text-align: center; }
+  @media (min-width: 1260px) and (prefers-reduced-motion: no-preference) { .pager { display: grid; gap: 14px; justify-items: center; } }
+  .pager ol { list-style: none; padding: 0; display: grid; gap: 4px; border-left: 1px solid var(--rule); }
+  .pager a { display: grid; place-items: center; min-width: 40px; height: 32px; padding: 0 8px; text-decoration: none; color: var(--muted); position: relative; transition: color .4s; }
+  .pager a::before { content: ""; position: absolute; left: -4px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; background: var(--gold); transform: rotate(45deg) scale(0); transition: transform .4s cubic-bezier(.2, .7, .2, 1); }
+  .pager a:hover { color: var(--text); }
+  .pager a[aria-current] { color: var(--gold); }
+  .pager a[aria-current]::before { transform: rotate(45deg) scale(1); }
+  .pg-home { width: 7px; height: 7px; border: 1px solid currentColor; transform: rotate(45deg); }
+  .pg-count { font-size: 12px; color: var(--muted); letter-spacing: .06em; }
+  .pg-count span { color: var(--gold); }
+
+  /* ---------- abertura ---------- */
+  .stage { padding: 56px 0 72px; }
+  /* campos da ficha entram em sequência no carregamento */
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  :global(.js:not([data-mode="quick"])) .row { opacity: 0; animation: rise .9s cubic-bezier(.2, .7, .2, 1) forwards; animation-delay: calc(var(--s) * 2.4s); }
+  @media (prefers-reduced-motion: reduce) { .row { opacity: 1 !important; } }
+
+  /* ---------- ficha ---------- */
+  .card { position: relative; background: var(--paper); padding: 44px 48px; display: grid; grid-template-columns: 1fr 210px; gap: 40px; }
+  .frame { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .frame rect { fill: none; stroke: var(--copper); stroke-width: 1; x: 0; y: 0; width: 100%; height: 100%; }
+  .frame .inner { x: 8px; y: 8px; width: calc(100% - 16px); height: calc(100% - 16px); opacity: .35; }
+  .frame .draw { stroke-dasharray: 100; stroke-dashoffset: 100; animation: draw 3.2s cubic-bezier(.6, 0, .2, 1) .2s forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .volute { position: absolute; width: 28px; height: 28px; fill: none; stroke: var(--gold); opacity: 0; animation: fade 1.2s ease 2.8s forwards; }
+  .volute.tl { top: -14px; left: -14px; }
+  .volute.br { bottom: -14px; right: -14px; transform: rotate(180deg); }
+  @keyframes fade { to { opacity: 1; } }
+  :global(:root[data-mode="quick"]) .frame .draw { animation: none; stroke-dashoffset: 0; }
+  :global(:root[data-mode="quick"]) .volute { animation: none; opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .frame .draw { stroke-dashoffset: 0; }
+    .volute { opacity: 1; }
+  }
+  .inv { font-size: 13px; font-weight: 500; color: var(--muted); }
+  h1 { font-size: clamp(38px, 5.4vw, 66px); line-height: 1.02; font-weight: 500; letter-spacing: -.01em; margin: 10px 0 18px; }
+  .lead { max-width: 54ch; font-size: 20px; }
+  .fields { display: grid; gap: 6px; margin-top: 28px; border-top: 1px solid var(--rule); padding-top: 18px; }
+  .fields div { display: grid; grid-template-columns: 110px 1fr; gap: 16px; }
+  dt { font: 500 14px/1.9 var(--sans); color: var(--muted); }
+  dd { font-size: 17px; }
+  .photo { aspect-ratio: 3 / 4; border: 1px solid var(--rule); display: grid; place-items: center; color: var(--muted); font-size: 13px; overflow: hidden; align-self: start;
+    background: repeating-linear-gradient(-45deg, transparent 0 9px, var(--rule) 9px 10px); }
+  .photo img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* ---------- projetos: duas fichas lado a lado, cabem em uma tela ---------- */
+  .projects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 32px; }
+  .project { display: grid; align-content: start; gap: 14px; padding: 4px 0 0 22px; border-left: 1px solid var(--rule); }
+  .p-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; }
+  .p-num { color: var(--copper); font-weight: 500; }
+  .p-body h3 { font-size: clamp(24px, 2.2vw, 29px); font-weight: 500; line-height: 1.1; }
+  .p-title { all: unset; cursor: pointer; background: linear-gradient(var(--copper), var(--copper)) 0 100% / 0 1px no-repeat; transition: background-size .6s cubic-bezier(.2, .7, .2, 1); }
+  .p-title:hover { background-size: 100% 1px; }
+  .p-title:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+  .p-sum { font-size: 15.5px; line-height: 1.5; color: var(--muted); max-width: 52ch; margin: 8px 0 14px; }
+  .flow { list-style: none; padding: 0; display: grid; gap: 5px; position: relative; margin-bottom: 16px; }
+  .flow::before, .flow::after { content: ""; position: absolute; left: 12px; top: 12px; bottom: 12px; width: 1px; background: var(--rule); }
+  .flow::after { background: var(--gold); transform-origin: top; transform: scaleY(1); }
+  .flow li { position: relative; display: grid; grid-template-columns: 25px 1fr; align-items: center; gap: 12px; font-size: 14px; line-height: 1.3; isolation: isolate; }
+  .dot { position: relative; width: 25px; height: 25px; display: grid; place-items: center; color: var(--gold); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .dot::before { content: ""; position: absolute; inset: 4px; border: 1px solid var(--gold); background: var(--bg); transform: rotate(45deg); z-index: -1; }
+  :global(.js:not([data-mode="quick"])) .flow::after { transform: scaleY(0); transition: transform 1.6s cubic-bezier(.5, 0, .2, 1) .3s; }
+  :global(.js:not([data-mode="quick"])) .flow li { opacity: 0; transition: opacity .6s ease; transition-delay: calc(.4s + var(--k) * .3s); }
+  :global(.js:not([data-mode="quick"])) .project.in .flow::after { transform: scaleY(1); }
+  :global(.js:not([data-mode="quick"])) .project.in .flow li { opacity: 1; }
+  .p-tech { margin-bottom: 4px; }
+  .more { font: 500 15px var(--sans); color: var(--copper); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+
+  /* telas baixas (notebook de 13"): os três projetos continuam em uma tela; as tecnologias ficam no popup */
+  @media (min-width: 861px) and (max-height: 800px) {
+    .project { gap: 8px; }
+    .p-meta { font-size: 12px; }
+    .p-sum { margin: 6px 0 10px; }
+    .flow { gap: 2px; margin-bottom: 10px; }
+    .p-tech { display: none; }
+  }
+
+  /* ---------- serviço militar ---------- */
+  .service { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: start; }
+  .s-fields { display: grid; gap: 18px; border-left: 1px solid var(--copper); padding-left: 22px; }
+  .s-fields dd { font-size: 20px; line-height: 1.35; }
+  .s-duties { list-style: none; padding: 0; display: grid; gap: 10px; font-size: 19px; line-height: 1.45; max-width: 50ch; }
+  .s-duties li { position: relative; padding-left: 24px; }
+  .s-duties li::before { content: ""; position: absolute; left: 2px; top: .6em; width: 7px; height: 7px; border: 1px solid var(--gold); transform: rotate(45deg); }
+  .s-bridge { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--rule); }
+  .s-bridge h3 { font-size: 19px; font-weight: 500; color: var(--gold); margin-bottom: 6px; }
+  .s-bridge p { color: var(--muted); max-width: 52ch; margin-bottom: 12px; }
+
+  /* ---------- trajetória ---------- */
+  .timeline { list-style: none; padding: 0 0 0 0; margin-left: 72px; position: relative; }
+  .timeline::before, .timeline::after { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px; background: var(--rule); }
+  .timeline::after { background: var(--gold); transform-origin: top; transform: scaleY(var(--tp)); }
+  .timeline li { position: relative; padding: 0 0 34px 32px; display: grid; gap: 2px; }
+  .timeline li::before { content: ""; position: absolute; left: -5px; top: 8px; width: 11px; height: 11px; border: 1px solid var(--rule); background: var(--bg); transform: rotate(45deg); transition: border-color .5s, background-color .5s; }
+  .timeline li.on::before { border-color: var(--gold); background: var(--gold); }
+  .timeline li > span { transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1); }
+  :global(.js:not([data-mode="quick"])) .timeline li:not(.on) > span { opacity: .25; transform: translateX(-6px); }
+  .when { font-size: 14px; font-weight: 500; color: var(--copper); }
+  .what { font-size: 20px; max-width: 60ch; }
+
+  /* ---------- competências ---------- */
+  .skills { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); }
+  .skills li { padding: 16px 18px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); display: grid; gap: 4px; }
+  .s-name { font-weight: 500; font-size: 16px; }
+  .s-level { color: var(--muted); font-size: 14px; display: flex; align-items: center; gap: 10px; }
+  .pips { display: inline-flex; gap: 4px; }
+  .pips i { width: 8px; height: 8px; border: 1px solid var(--gold); transform: rotate(45deg); }
+  .pips i.on { background: var(--gold); }
+  .note { font-size: 13px; margin-top: 10px; }
+  .sub { font-weight: 500; font-size: 22px; margin: 40px 0 12px; }
+  .courses { border-collapse: collapse; width: 100%; font-size: 15px; }
+  .courses td { padding: 10px 12px 10px 0; border-top: 1px solid var(--rule); }
+  .courses td:not(:first-child) { color: var(--muted); white-space: nowrap; }
+
+  @media (max-width: 860px) {
+    .projects { grid-template-columns: 1fr; gap: 40px; }
+    .service { grid-template-columns: 1fr; gap: 28px; }
+  }
+  @media (max-width: 760px) {
+    .card { grid-template-columns: 1fr; padding: 32px 22px; }
+    .stage { padding-top: 32px; }
+    .photo { max-width: 150px; grid-row: 1; }
+    .fields div { grid-template-columns: 1fr; gap: 0; margin-bottom: 8px; }
+    .project { padding-left: 18px; }
+    .timeline { margin-left: 6px; }
+    .skills { grid-template-columns: 1fr 1fr; }
+    .courses td:nth-child(3) { display: none; }
+  }
+</style>

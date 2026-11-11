@@ -1,0 +1,175 @@
+---
+import '../styles/global.css';
+import { ui, routes, type Lang, type RouteKey } from '../content';
+
+interface Props {
+  lang: Lang;
+  route: RouteKey;
+  title: string;
+  description: string;
+  showModes?: boolean;
+}
+const { lang, route, title, description, showModes = false } = Astro.props;
+const t = ui[lang];
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+const home = routes.home[lang];
+const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
+---
+<!doctype html>
+<html lang={lang === 'pt' ? 'pt-BR' : 'en'}>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="alternate" hreflang="pt-BR" href={site + routes[route].pt} />
+  <link rel="alternate" hreflang="en" href={site + routes[route].en} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script is:inline>
+    // aplica tema e modo salvos antes de pintar, para não piscar
+    try {
+      const th = localStorage.getItem('theme');
+      if (th) document.documentElement.dataset.theme = th;
+      const md = localStorage.getItem('mode');
+      if (md) document.documentElement.dataset.mode = md;
+    } catch (e) {}
+    document.documentElement.classList.add('js');
+  </script>
+</head>
+<body>
+  <a class="skip" href="#conteudo">{t.skip}</a>
+  <header class="top">
+    <div class="wrap top-in">
+      <a class="mark" href={home}>J. G. Matzenbacher</a>
+      <nav aria-label={lang === 'pt' ? 'Seções' : 'Sections'}>
+        <a href={home + '#projetos'}>{t.nav.projects}</a>
+        <a href={home + '#servico'}>{t.nav.service}</a>
+        <a href={home + '#trajetoria'}>{t.nav.path}</a>
+        <a href={home + '#competencias'}>{t.nav.skills}</a>
+        <a href={home + '#contato'}>{t.nav.contact}</a>
+      </nav>
+      <div class="ctrl">
+        {showModes && (
+          <div class="modes" role="group" aria-label={t.modeLabel}>
+            <button type="button" data-set-mode="quick" aria-pressed="false">{t.quick}</button>
+            <button type="button" data-set-mode="explore" aria-pressed="true">{t.explore}</button>
+          </div>
+        )}
+        <a class="pill" href={routes[route][other]} hreflang={other} lang={other === 'pt' ? 'pt-BR' : 'en'}>
+          <span aria-hidden="true">{t.otherLangShort}</span><span class="visually-hidden">{t.otherLang}</span>
+        </a>
+        <button type="button" class="pill" id="theme-toggle" aria-label={t.themeLabel}>
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="progress" aria-hidden="true"><i></i></div>
+  </header>
+
+  <div class="wrap">
+    <main id="conteudo">
+      <slot />
+    </main>
+
+    <footer class="foot sans">
+      <div class="meander" aria-hidden="true"></div>
+      <div class="foot-row">
+        <span>{t.footer}</span>
+        <span>Curitiba, Paraná, <abbr title="2026">MMXXVI</abbr></span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    const save = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+    // tema
+    document.getElementById('theme-toggle')?.addEventListener('click', () => {
+      const isDark = root.dataset.theme
+        ? root.dataset.theme === 'dark'
+        : matchMedia('(prefers-color-scheme: dark)').matches;
+      root.dataset.theme = isDark ? 'light' : 'dark';
+      save('theme', root.dataset.theme);
+    });
+
+    // modos de leitura (Explorar é o padrão)
+    const modeButtons = document.querySelectorAll<HTMLButtonElement>('[data-set-mode]');
+    const syncModes = () => {
+      const m = root.dataset.mode === 'quick' ? 'quick' : 'explore';
+      modeButtons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.setMode === m)));
+      window.dispatchEvent(new Event('scroll'));
+    };
+    modeButtons.forEach(b => b.addEventListener('click', () => {
+      root.dataset.mode = b.dataset.setMode!;
+      save('mode', root.dataset.mode);
+      syncModes();
+      scrollTo({ top: 0 });
+    }));
+    syncModes();
+
+    // links externos abrem em nova aba
+    document.querySelectorAll<HTMLAnchorElement>('a[href^="http"]').forEach(a => {
+      if (a.host !== location.host) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    });
+
+    // títulos que se montam letra a letra
+    document.querySelectorAll<HTMLElement>('[data-letters]').forEach(el => {
+      const text = el.textContent ?? '';
+      el.setAttribute('aria-label', text);
+      let i = 0;
+      el.innerHTML = text.split(' ').map(word =>
+        `<span class="w" aria-hidden="true">${[...word].map(ch => `<span style="--i:${i++}">${ch}</span>`).join('')}</span>`
+      ).join(' ');
+    });
+
+    // revelação ao entrar na tela
+    const io = new IntersectionObserver(entries => entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }), { threshold: 0.2, rootMargin: '0px 0px -8% 0px' });
+    document.querySelectorAll('[data-reveal], [data-letters]').forEach(el => io.observe(el));
+
+    // barra de progresso da leitura
+    const bar = document.querySelector<HTMLElement>('.progress i');
+    const onScroll = () => {
+      const max = document.documentElement.scrollHeight - innerHeight;
+      if (bar) bar.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  </script>
+</body>
+</html>
+
+<style>
+  .top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .top-in { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap; }
+  .progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; }
+  .progress i { display: block; height: 100%; background: linear-gradient(to right, var(--copper), var(--gold)); transform-origin: left; transform: scaleX(0); }
+  .mark { font: 600 20px var(--serif); text-decoration: none; letter-spacing: .01em; }
+  nav { display: flex; gap: 22px; font: 500 15px var(--sans); }
+  nav a { text-decoration: none; color: var(--muted); }
+  nav a:hover { color: var(--text); }
+  .ctrl { display: flex; gap: 8px; align-items: center; font: 14px var(--sans); }
+  .modes { display: flex; border: 1px solid var(--rule); border-radius: 999px; padding: 2px; }
+  .modes button { background: none; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; color: var(--muted); transition: background-color .3s, color .3s; }
+  .modes button[aria-pressed="true"] { background: var(--copper); color: var(--paper); }
+  .pill { display: inline-grid; place-items: center; min-width: 36px; height: 32px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 999px; background: none; cursor: pointer; text-decoration: none; }
+  .pill:hover { border-color: var(--copper); color: var(--copper); }
+  .foot { padding: 40px 0 56px; color: var(--muted); font-size: 14px; display: grid; gap: 18px; }
+  .foot-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .foot abbr { text-decoration: none; letter-spacing: .08em; color: var(--gold); }
+  /* na Visão rápida a folha cabe em uma ou duas telas: o menu de seções sai */
+  :global(:root[data-mode="quick"]) nav { display: none; }
+  @media (max-width: 1080px) {
+    nav { display: none; }
+  }
+  @media (max-width: 420px) {
+    .modes button { padding: 4px 9px; font-size: 13px; }
+  }
+</style>

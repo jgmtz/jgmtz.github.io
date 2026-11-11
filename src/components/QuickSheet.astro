@@ -1,0 +1,136 @@
+---
+// Visão rápida: o portfólio inteiro como uma folha de resumo, em uma ou duas telas.
+import { ui, projects, timeline, skills, courses, EMAIL, GITHUB, LINKEDIN, HAS_CV, CV_FILE, type Lang } from '../content';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+const s = t.sheet;
+---
+<div class="sheet quick-only">
+  <header class="sh-head">
+    <div>
+      <p class="sh-kicker sans">{s.kicker}</p>
+      <h1>João Guilherme Matzenbacher</h1>
+      <p class="sh-lead">{t.lead}</p>
+    </div>
+    <div class="sh-actions sans">
+      <button type="button" class="btn solid" id="copy-email" data-email={EMAIL} data-done={s.copied}>{s.copy}</button>
+      {HAS_CV
+        ? <a class="btn" href={CV_FILE[lang]} target="_blank" rel="noopener">{s.cv}</a>
+        : <span class="btn off" aria-disabled="true">{t.fields.cvSoon}</span>}
+      <a class="btn" href={LINKEDIN}>LinkedIn</a>
+      <a class="btn" href={GITHUB}>GitHub</a>
+      <button type="button" class="btn" id="print-sheet">{s.print}</button>
+    </div>
+  </header>
+
+  <div class="sh-grid">
+    <div class="sh-main">
+      <section>
+        <h2>{t.sections.projects}</h2>
+        {projects[lang].map(p => (
+          <article class="sh-proj">
+            <h3>{p.title} <span class="sh-meta sans">{p.year}, {p.context}</span></h3>
+            <p>{p.summary}</p>
+            <p class="sh-tech sans">{p.tech.join(' · ')} <a href={p.repo}>{s.code}</a></p>
+          </article>
+        ))}
+      </section>
+
+      <section>
+        <h2>{t.sections.service}</h2>
+        <p>{t.service.fields.map(([, v], i) => i === 2 ? v.charAt(0).toLowerCase() + v.slice(1) : v).join(', ')}. {t.service.duties.slice(0, 2).join(' ')} {t.service.bridge}</p>
+      </section>
+
+      <section>
+        <h2>{t.sections.path}</h2>
+        <ul class="sh-list">
+          {timeline[lang].map(e => <li><span class="sh-y sans">{e.year}</span>{e.what}</li>)}
+        </ul>
+      </section>
+    </div>
+
+    <aside class="sh-side sans">
+      <section>
+        <h2>{s.profile}</h2>
+        <dl>
+          <dt>{t.fields.education}</dt><dd>{t.fields.educationV}</dd>
+          <dt>{t.fields.location}</dt><dd>{t.fields.locationV}</dd>
+          <dt>{t.fields.languages}</dt><dd>{t.fields.languagesV}</dd>
+        </dl>
+      </section>
+      <section>
+        <h2>{t.sections.skills}</h2>
+        <ul class="sh-skills">{skills[lang].map(([name, level]) => <li><span>{name}</span><span class="muted">{level}</span></li>)}</ul>
+      </section>
+      <section>
+        <h2>{t.sections.courses}</h2>
+        <ul class="sh-skills">{courses[lang].map(([c, where, hours, year]) => <li><span>{c}</span><span class="muted">{where}, {hours}, {year}</span></li>)}</ul>
+      </section>
+      <section>
+        <h2>{t.sections.contact}</h2>
+        <p><a href={'mailto:' + EMAIL}>{EMAIL}</a><br />Curitiba, Paraná</p>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+  const copy = document.getElementById('copy-email');
+  copy?.addEventListener('click', async () => {
+    const label = copy.textContent;
+    try { await navigator.clipboard.writeText(copy.dataset.email!); copy.textContent = copy.dataset.done!; }
+    catch { location.href = 'mailto:' + copy.dataset.email; return; }
+    setTimeout(() => { copy.textContent = label; }, 2200);
+  });
+  document.getElementById('print-sheet')?.addEventListener('click', () => print());
+</script>
+
+<style>
+  .sheet { padding: 40px 0 24px; }
+  .sh-head { display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: end; padding-bottom: 24px; border-bottom: 1px solid var(--copper); }
+  .sh-kicker { font-size: 13px; font-weight: 500; color: var(--muted); }
+  h1 { font-size: clamp(32px, 4vw, 46px); font-weight: 500; line-height: 1.05; margin: 6px 0 10px; }
+  .sh-lead { max-width: 62ch; font-size: 17px; }
+  .sh-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sh-actions .btn { text-align: center; font-size: 14px; padding: 7px 12px; }
+  .sh-actions .btn:first-child { grid-column: 1 / -1; }
+  .btn.off { border-color: var(--rule); color: var(--muted); cursor: default; }
+  .btn.off:hover { background: none; color: var(--muted); }
+
+  .sh-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 48px; padding-top: 24px; }
+  h2 { font: 600 12px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--copper); margin-bottom: 10px; }
+  section + section { margin-top: 24px; }
+  .sh-main p, .sh-list { font-size: 16px; line-height: 1.55; }
+  .sh-proj + .sh-proj { margin-top: 14px; }
+  .sh-proj h3 { font-size: 20px; font-weight: 500; line-height: 1.3; }
+  .sh-meta { font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+  .sh-tech { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .sh-tech a { margin-left: 8px; color: var(--copper); }
+  .sh-list { list-style: none; padding: 0; display: grid; gap: 4px; }
+  .sh-list li { display: grid; grid-template-columns: 48px 1fr; }
+  .sh-y { font-size: 13px; color: var(--copper); padding-top: 2px; }
+
+  .sh-side { font-size: 14px; line-height: 1.5; border-left: 1px solid var(--rule); padding-left: 28px; }
+  .sh-side dl { display: grid; gap: 2px; }
+  .sh-side dt { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .sh-skills { list-style: none; padding: 0; display: grid; gap: 4px; }
+  .sh-skills li { display: flex; justify-content: space-between; gap: 12px; }
+  .sh-skills li span:last-child { text-align: right; white-space: nowrap; }
+
+  @media (max-width: 860px) {
+    .sh-head { grid-template-columns: 1fr; }
+    .sh-actions { grid-template-columns: repeat(2, 1fr); }
+    .sh-grid { grid-template-columns: 1fr; gap: 28px; }
+    .sh-side { border-left: 0; padding-left: 0; border-top: 1px solid var(--rule); padding-top: 24px; }
+  }
+
+  @media print {
+    .sheet { padding-top: 0; }
+    .sh-actions { display: none; }
+    .sh-head { grid-template-columns: 1fr; }
+    .sh-tech a::after { content: " (" attr(href) ")"; }
+    section, .sh-proj { break-inside: avoid; }
+  }
+</style>
