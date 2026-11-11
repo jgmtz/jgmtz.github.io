@@ -12,6 +12,13 @@ const pages = [
   ['inicio', '', t.nav.home], ['projetos', 'I', t.nav.projects], ['servico', 'II', t.nav.service],
   ['trajetoria', 'III', t.nav.path], ['competencias', 'IV', t.nav.skills], ['contato', 'V', t.nav.contact],
 ];
+// trajetória agrupada por ano, uma coluna para cada
+const years: [number, string[]][] = [];
+for (const e of timeline[lang]) {
+  const last = years[years.length - 1];
+  if (last && last[0] === e.year) last[1].push(e.what);
+  else years.push([e.year, [e.what]]);
+}
 const title = lang === 'pt'
   ? 'João Guilherme Matzenbacher, Engenharia de Software'
   : 'João Guilherme Matzenbacher, Software Engineering';
@@ -62,7 +69,9 @@ const title = lang === 'pt'
 
   <section class="section explore-only" id="projetos" aria-labelledby="h-proj">
     <div class="sec-head"><span class="n" aria-hidden="true">I</span><h2 id="h-proj" data-letters>{t.sections.projects}</h2></div>
-    <div class="projects">
+    <div class="carousel" data-carousel>
+    <div class="car-view">
+    <div class="projects car-track">
       {projects[lang].map((p, i) => (
         <article class="project" data-reveal>
           <div class="p-meta sans">
@@ -83,6 +92,14 @@ const title = lang === 'pt'
           </div>
         </article>
       ))}
+    </div>
+    </div>
+    <div class="car-nav sans">
+      <button type="button" class="car-btn" data-car="prev" aria-label={t.carPrev}>←</button>
+      <span class="car-count" aria-live="polite" data-of={t.carOf}></span>
+      <button type="button" class="car-btn" data-car="next" aria-label={t.carNext}>→</button>
+      <span class="car-hint muted">{t.carHint}</span>
+    </div>
     </div>
     {projects[lang].map((p, i) => <ProjectModal lang={lang} project={p.key} index={i} />)}
   </section>
@@ -106,11 +123,11 @@ const title = lang === 'pt'
 
   <section class="section explore-only" id="trajetoria" aria-labelledby="h-traj">
     <div class="sec-head"><span class="n" aria-hidden="true">III</span><h2 id="h-traj" data-letters>{t.sections.path}</h2></div>
-    <ol class="timeline" style="--tp: 0">
-      {timeline[lang].map((e, i, all) => (
-        <li data-at={(i / all.length).toFixed(2)}>
-          <span class="when sans">{e.year}</span>
-          <span class="what">{e.what}</span>
+    <ol class="timeline" style={`--tp: 0; --n: ${years.length}`}>
+      {years.map(([year, whats], i) => (
+        <li class="yr" data-at={(i / years.length).toFixed(2)}>
+          <h3 class="when sans"><span class="yr-dot" aria-hidden="true"></span>{year}</h3>
+          <ul class="yr-list">{whats.map(w => <li class="what">{w}</li>)}</ul>
         </li>
       ))}
     </ol>
@@ -150,7 +167,7 @@ const title = lang === 'pt'
   const root = document.documentElement;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   const tl = document.querySelector<HTMLElement>('.timeline');
-  const items = tl ? [...tl.querySelectorAll<HTMLElement>('li')] : [];
+  const items = tl ? [...tl.querySelectorAll<HTMLElement>(':scope > li')] : [];
   const clamp = (v: number) => Math.min(1, Math.max(0, v));
 
   let ticking = false;
@@ -163,7 +180,8 @@ const title = lang === 'pt'
       let tp = 1;
       if (animated) {
         const r = tl.getBoundingClientRect();
-        tp = clamp((innerHeight * 0.75 - r.top) / r.height);
+        // a linha agora é horizontal e o bloco é baixo: desenha enquanto ele sobe pela tela
+        tp = clamp((innerHeight * 0.85 - r.top) / (innerHeight * 0.45));
       }
       tl.style.setProperty('--tp', tp.toFixed(3));
       items.forEach(li => li.classList.toggle('on', tp >= Number(li.dataset.at) + 0.04 || tp === 1));
@@ -211,6 +229,118 @@ const title = lang === 'pt'
     e.preventDefault();
     next.scrollIntoView({ behavior: 'smooth' });
   });
+
+  // carrossel dos projetos: posições 0 (três inteiras), depois meio passo de cada vez
+  // com metade em cada ponta, e o fim (as três últimas inteiras)
+  const car = document.querySelector<HTMLElement>('[data-carousel]');
+  if (car) {
+    const view = car.querySelector<HTMLElement>('.car-view')!;
+    const track = car.querySelector<HTMLElement>('.car-track')!;
+    const cards = [...track.querySelectorAll<HTMLElement>('.project')];
+    const prev = car.querySelector<HTMLButtonElement>('[data-car="prev"]')!;
+    const next = car.querySelector<HTMLButtonElement>('[data-car="next"]')!;
+    const count = car.querySelector<HTMLElement>('.car-count')!;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const desktop = () => innerWidth > 860;
+    let pos: number[] = [0];
+    let at = 0;
+
+    const layout = () => {
+      if (!desktop() || cards.length < 2) { pos = [0]; at = 0; track.style.transform = ''; paint(); return; }
+      const step = cards[1].offsetLeft - cards[0].offsetLeft;
+      const max = track.scrollWidth - view.clientWidth;
+      pos = [0];
+      for (let k = 1; max > 1; k++) {
+        const p = (k - 0.5) * step;
+        if (p >= max - 1) { pos.push(max); break; }
+        pos.push(p);
+      }
+      at = Math.min(at, pos.length - 1);
+      paint();
+    };
+
+    const paint = () => {
+      const x = pos[at];
+      if (desktop()) track.style.transform = `translateX(${-x}px)`;
+      const w = view.clientWidth;
+      const full: number[] = [];
+      cards.forEach((c, k) => {
+        const l = c.offsetLeft - (desktop() ? x : view.scrollLeft);
+        const r = l + c.offsetWidth;
+        const whole = l >= -2 && r <= w + 2;
+        const seen = r > 2 && l < w - 2;
+        if (whole) full.push(k);
+        c.classList.toggle('peek', desktop() && seen && !whole);
+        c.toggleAttribute('inert', desktop() && !seen);
+      });
+      prev.disabled = at === 0;
+      next.disabled = at === pos.length - 1;
+      if (full.length) count.textContent = `${pad(full[0] + 1)}–${pad(full[full.length - 1] + 1)} ${count.dataset.of} ${pad(cards.length)}`;
+    };
+
+    const go = (d: number) => {
+      const n = Math.max(0, Math.min(pos.length - 1, at + d));
+      if (n !== at) { at = n; paint(); }
+    };
+    // menor posição em que a ficha k aparece inteira
+    const show = (k: number) => {
+      const c = cards[k];
+      const i = pos.findIndex(x => c.offsetLeft - x >= -2 && c.offsetLeft + c.offsetWidth - x <= view.clientWidth + 2);
+      if (i >= 0 && i !== at) { at = i; paint(); }
+    };
+
+    prev.addEventListener('click', () => go(-1));
+    next.addEventListener('click', () => go(1));
+
+    // metade apagada: o clique traz a ficha para o meio em vez de abrir o projeto
+    cards.forEach((c, k) => c.addEventListener('click', e => {
+      if (!c.classList.contains('peek')) return;
+      e.preventDefault(); e.stopPropagation();
+      show(k);
+    }, true));
+    track.addEventListener('focusin', e => {
+      const k = cards.findIndex(c => c.contains(e.target as Node));
+      if (k >= 0 && cards[k].classList.contains('peek')) show(k);
+    });
+
+    // rolagem lateral (trackpad, Shift + roda): um passo por gesto
+    let lock = 0;
+    view.addEventListener('wheel', e => {
+      if (!desktop()) return;
+      const dx = e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX;
+      if (Math.abs(dx) < 4 || Math.abs(dx) < Math.abs(e.deltaY) * (e.shiftKey ? 0 : 1)) return;
+      e.preventDefault();
+      const now = performance.now();
+      if (now < lock) return;
+      lock = now + 650;
+      go(dx > 0 ? 1 : -1);
+    }, { passive: false });
+
+    // arrastar com o dedo em telas de toque grandes
+    let x0: number | null = null;
+    view.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') x0 = e.clientX; });
+    view.addEventListener('pointerup', e => {
+      if (x0 === null) return;
+      const d = e.clientX - x0; x0 = null;
+      if (desktop() && Math.abs(d) > 40) go(d < 0 ? 1 : -1);
+    });
+
+    // setas ← → enquanto a seção de projetos está na tela
+    addEventListener('keydown', e => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      if (!desktop() || root.dataset.mode === 'quick' || document.querySelector('dialog[open]')) return;
+      if ((e.target as HTMLElement).closest('input, textarea, select, [contenteditable]')) return;
+      const r = car.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight) return;
+      e.preventDefault();
+      go(e.key === 'ArrowRight' ? 1 : -1);
+    });
+
+    view.addEventListener('scroll', paint, { passive: true });
+    addEventListener('resize', layout);
+    document.fonts?.ready.then(layout);
+    layout();
+  }
 
   // popups dos projetos (também abrem por #smartscale ou #tijucas na URL)
   const openModal = (id: string) => {
@@ -275,8 +405,24 @@ const title = lang === 'pt'
     background: repeating-linear-gradient(-45deg, transparent 0 9px, var(--rule) 9px 10px); }
   .photo img { width: 100%; height: 100%; object-fit: cover; }
 
-  /* ---------- projetos: duas fichas lado a lado, cabem em uma tela ---------- */
-  .projects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 56px 32px; }
+  /* ---------- projetos: carrossel de uma linha ----------
+     Começa com três fichas inteiras; a cada passo ficam duas inteiras no meio
+     e metade de uma em cada ponta. As metades ficam apagadas e, clicadas, viram o foco. */
+  .car-view { overflow: hidden; }
+  .projects { position: relative; display: flex; gap: 32px; transition: transform .7s cubic-bezier(.2, .7, .2, 1); will-change: transform; }
+  .projects > .project { flex: 0 0 calc((100% - 64px) / 3); min-width: 0; }
+  .project > * { transition: opacity .5s ease; }
+  .project.peek { cursor: pointer; }
+  .project.peek > * { opacity: .32; }
+  .project.peek:hover > * { opacity: .55; }
+  .car-nav { display: flex; align-items: center; gap: 14px; margin-top: 26px; font-size: 13px; }
+  .car-btn { width: 38px; height: 38px; border: 1px solid var(--copper); background: none; color: var(--copper); cursor: pointer; font-size: 16px; transition: background-color .3s, color .3s, opacity .3s; }
+  .car-btn:hover:not(:disabled) { background: var(--copper); color: var(--paper); }
+  .car-btn:disabled { opacity: .3; cursor: default; }
+  .car-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .car-count { min-width: 92px; text-align: center; color: var(--gold); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+  .car-hint { margin-left: 8px; }
+  @media (prefers-reduced-motion: reduce) { .projects { transition: none; } }
   .project { display: grid; align-content: start; gap: 14px; padding: 4px 0 0 22px; border-left: 1px solid var(--rule); }
   .p-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; }
   .p-num { color: var(--copper); font-weight: 500; }
@@ -319,16 +465,17 @@ const title = lang === 'pt'
   .s-bridge p { color: var(--muted); max-width: 52ch; margin-bottom: 12px; }
 
   /* ---------- trajetória ---------- */
-  .timeline { list-style: none; padding: 0 0 0 0; margin-left: 72px; position: relative; }
-  .timeline::before, .timeline::after { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px; background: var(--rule); }
-  .timeline::after { background: var(--gold); transform-origin: top; transform: scaleY(var(--tp)); }
-  .timeline li { position: relative; padding: 0 0 34px 32px; display: grid; gap: 2px; }
-  .timeline li::before { content: ""; position: absolute; left: -5px; top: 8px; width: 11px; height: 11px; border: 1px solid var(--rule); background: var(--bg); transform: rotate(45deg); transition: border-color .5s, background-color .5s; }
-  .timeline li.on::before { border-color: var(--gold); background: var(--gold); }
-  .timeline li > span { transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1); }
-  :global(.js:not([data-mode="quick"])) .timeline li:not(.on) > span { opacity: .25; transform: translateX(-6px); }
-  .when { font-size: 14px; font-weight: 500; color: var(--copper); }
-  .what { font-size: 20px; max-width: 60ch; }
+  /* uma coluna por ano; a linha dourada corre da esquerda para a direita */
+  .timeline { list-style: none; padding: 0; position: relative; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 0 40px; }
+  .timeline::before, .timeline::after { content: ""; position: absolute; left: 0; right: 0; top: 11px; height: 1px; background: var(--rule); }
+  .timeline::after { background: var(--gold); transform-origin: left; transform: scaleX(var(--tp)); }
+  .yr > * { transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1); }
+  :global(.js:not([data-mode="quick"])) .yr:not(.on) > * { opacity: .25; transform: translateY(6px); }
+  .when { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 12px; padding-right: 14px; background: var(--bg); font-size: 15px; font-weight: 500; color: var(--copper); }
+  .yr-dot { width: 11px; height: 11px; border: 1px solid var(--rule); background: var(--bg); transform: rotate(45deg); transition: border-color .5s, background-color .5s; }
+  .yr.on .yr-dot { border-color: var(--gold); background: var(--gold); }
+  .yr-list { list-style: none; padding: 0; margin-top: 22px; display: grid; gap: 16px; }
+  .what { font-size: 18px; line-height: 1.4; padding-left: 16px; border-left: 1px solid var(--rule); }
 
   /* ---------- competências ---------- */
   .skills { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); }
@@ -344,8 +491,15 @@ const title = lang === 'pt'
   .courses td { padding: 10px 12px 10px 0; border-top: 1px solid var(--rule); }
   .courses td:not(:first-child) { color: var(--muted); white-space: nowrap; }
 
+  /* celular e tablet: rolagem lateral nativa, uma ficha e um pedaço da próxima */
   @media (max-width: 860px) {
-    .projects { grid-template-columns: 1fr; gap: 40px; }
+    .car-view { overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+    .car-view::-webkit-scrollbar { display: none; }
+    .projects { transform: none !important; gap: 22px; }
+    .projects > .project { flex-basis: 82%; scroll-snap-align: start; }
+    .project.peek > * { opacity: 1; }
+    .car-btn, .car-count { display: none; }
+    .car-hint { margin-left: 0; }
     .service { grid-template-columns: 1fr; gap: 28px; }
   }
   @media (max-width: 760px) {
@@ -354,7 +508,9 @@ const title = lang === 'pt'
     .photo { max-width: 150px; grid-row: 1; }
     .fields div { grid-template-columns: 1fr; gap: 0; margin-bottom: 8px; }
     .project { padding-left: 18px; }
-    .timeline { margin-left: 6px; }
+    .timeline { grid-template-columns: 1fr; gap: 30px; }
+    .timeline::before, .timeline::after { display: none; }
+    .yr-list { margin-top: 12px; }
     .skills { grid-template-columns: 1fr 1fr; }
     .courses td:nth-child(3) { display: none; }
   }

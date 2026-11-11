@@ -35,7 +35,9 @@ const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
     try {
       const th = localStorage.getItem('theme');
       if (th) document.documentElement.dataset.theme = th;
-      const md = localStorage.getItem('mode');
+      // o modo vale só para a visita atual: quem chega pelo link sempre começa no Explorar
+      localStorage.removeItem('mode');
+      const md = sessionStorage.getItem('mode');
       if (md) document.documentElement.dataset.mode = md;
     } catch (e) {}
     document.documentElement.classList.add('js');
@@ -56,8 +58,8 @@ const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
       <div class="ctrl">
         {showModes && (
           <div class="modes" role="group" aria-label={t.modeLabel}>
-            <button type="button" data-set-mode="quick" aria-pressed="false">{t.quick}</button>
             <button type="button" data-set-mode="explore" aria-pressed="true">{t.explore}</button>
+            <button type="button" data-set-mode="quick" aria-pressed="false">{t.quick}</button>
           </div>
         )}
         <a class="pill" href={routes[route][other]} hreflang={other} lang={other === 'pt' ? 'pt-BR' : 'en'}>
@@ -107,7 +109,7 @@ const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
     };
     modeButtons.forEach(b => b.addEventListener('click', () => {
       root.dataset.mode = b.dataset.setMode!;
-      save('mode', root.dataset.mode);
+      try { sessionStorage.setItem('mode', root.dataset.mode!); } catch (e) {}
       syncModes();
       scrollTo({ top: 0 });
     }));
