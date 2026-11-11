@@ -28,7 +28,7 @@ export const ui = {
     themeLabel: 'Alternar tema claro e escuro',
     otherLang: 'English',
     otherLangShort: 'EN',
-    cardUpdated: 'Ficha de apresentação, atualizada em outubro de 2026',
+    cardUpdated: 'Ficha de apresentação, atualizada em novembro de 2026',
     lead: 'Estudante de Engenharia de Software. Gosto de deixar processos claros antes de transformá-los em sistema, e procuro estágio em desenvolvimento, processos, projetos ou produto.',
     leadMore: 'Faço planilha para quase tudo e gosto de ver as coisas estruturadas. Foi assim que levei para a faculdade um problema real do quartel onde servi, que virou o projeto MilScale.',
     fields: {
@@ -91,7 +91,7 @@ export const ui = {
     themeLabel: 'Toggle light and dark theme',
     otherLang: 'Português',
     otherLangShort: 'PT',
-    cardUpdated: 'Profile card, updated October 2026',
+    cardUpdated: 'Profile card, updated November 2026',
     lead: 'Software Engineering student. I like to make a process clear before turning it into a system, and I am looking for an internship in development, processes, projects or product.',
     leadMore: 'I keep a spreadsheet for almost everything and like seeing things structured. That is how I took a real problem from the army base where I served to university, where it became the MilScale project.',
     fields: {
